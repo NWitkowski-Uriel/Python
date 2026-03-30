@@ -1,0 +1,32 @@
+"""
+Exercise 4.2 – reversing a slice of a list (iterative and recursive).
+"""
+
+def reverse_range_iterative(L, left, right):
+    """
+    Reverse the slice of list L from index left to right inclusive.
+    Iterative version.
+    """
+    while left < right:
+        L[left], L[right] = L[right], L[left]
+        left += 1
+        right -= 1
+
+def reverse_range_recursive(L, left, right):
+    """
+    Reverse the slice of list L from index left to right inclusive.
+    Recursive version.
+    """
+    if left >= right:
+        return
+    L[left], L[right] = L[right], L[left]
+    reverse_range_recursive(L, left + 1, right - 1)
+
+# Example from the problem statement
+L1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+reverse_range_iterative(L1, 3, 6)
+print("Iterative:", L1)   # Expected: [0, 1, 2, 6, 5, 4, 3, 7, 8, 9]
+
+L2 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+reverse_range_recursive(L2, 3, 6)
+print("Recursive:", L2)   # Expected: [0, 1, 2, 6, 5, 4, 3, 7, 8, 9]
