@@ -1,31 +1,31 @@
 """
-Zadanie 4.1 – funkcje lambda dla punktów (x, y).
+Exercise 4.1 – lambda functions for points (x, y).
 """
 
-# Lista przykładowych punktów (x, y)
+# Example list of points (x, y)
 points = [(0, 0), (1, 0), (0.5, 0.5), (-0.8, -0.6), (2, 1), (-1, -1), (0.3, -0.4), (0.1, 2)]
 
-# (a) test czy punkt znajduje się w kole jednostkowym (x^2 + y^2 <= 1)
+# (a) test whether point lies inside the unit circle (x^2 + y^2 <= 1)
 in_unit_circle = lambda p: p[0]**2 + p[1]**2 <= 1
 points_in_circle = list(filter(in_unit_circle, points))
-print("Punkty w kole jednostkowym:", points_in_circle)
+print("Points inside unit circle:", points_in_circle)
 
-# (b) test czy obie współrzędne są dodatnie (x > 0 and y > 0)
+# (b) test whether both coordinates are positive (x > 0 and y > 0)
 both_positive = lambda p: p[0] > 0 and p[1] > 0
 points_positive = list(filter(both_positive, points))
-print("Punkty z dodatnimi współrzędnymi:", points_positive)
+print("Points with positive coordinates:", points_positive)
 
-# (c) klucz sortowania: malejąco y, rosnąco x
+# (c) sorting key: decreasing y, increasing x
 key_y_desc_x_asc = lambda p: (-p[1], p[0])
 sorted_by_y_desc_x_asc = sorted(points, key=key_y_desc_x_asc)
-print("Sortowanie (y malejąco, x rosnąco):", sorted_by_y_desc_x_asc)
+print("Sorted (y descending, x ascending):", sorted_by_y_desc_x_asc)
 
-# (d) klucz sortowania: suma |x|+|y|
+# (d) sorting key: sum |x|+|y|
 key_manhattan = lambda p: abs(p[0]) + abs(p[1])
 sorted_by_manhattan = sorted(points, key=key_manhattan)
-print("Sortowanie wg sumy |x|+|y|:", sorted_by_manhattan)
+print("Sorted by |x|+|y|:", sorted_by_manhattan)
 
-# Użycie sortowania w miejscu (in‑place) – przykładowo dla kryterium (c)
+# In‑place sort example for criterion (c)
 points_copy = points.copy()
 points_copy.sort(key=key_y_desc_x_asc)
-print("Lista posortowana in‑place (y malejąco, x rosnąco):", points_copy)
+print("List sorted in‑place (y descending, x ascending):", points_copy)
