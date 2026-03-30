@@ -1,0 +1,34 @@
+"""
+Exercise 4.3 – infinite generators.
+"""
+
+def iter_even():
+    """Generator of even numbers: 0, 2, 4, ..."""
+    n = 0
+    while True:
+        yield n
+        n += 2
+
+def iter_odd():
+    """Generator of odd numbers: 1, 3, 5, ..."""
+    n = 1
+    while True:
+        yield n
+        n += 2
+
+def iter_power(k):
+    """Generator of powers: 1, k, k*k, k*k*k, ..."""
+    power = 1
+    while True:
+        yield power
+        power *= k
+
+# Example usage – get first 5 elements from each generator
+even_gen = iter_even()
+print("First 5 evens:", [next(even_gen) for _ in range(5)])
+
+odd_gen = iter_odd()
+print("First 5 odds:", [next(odd_gen) for _ in range(5)])
+
+power_gen = iter_power(3)
+print("First 5 powers of 3:", [next(power_gen) for _ in range(5)])
