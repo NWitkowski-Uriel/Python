@@ -1,0 +1,20 @@
+from datetime import datetime, timedelta
+
+def print_working_days(date1, date2):
+    """
+    Print all working days (Monday to Friday) from date1 inclusive
+    to date2 exclusive. Dates are strings 'YYYY-MM-DD'.
+    """
+    start = datetime.strptime(date1, '%Y-%m-%d')
+    end = datetime.strptime(date2, '%Y-%m-%d')
+    current = start
+    one_day = timedelta(days=1)
+
+    while current < end:
+        # Monday = 0, Sunday = 6
+        if current.weekday() < 5:   # 0-4 are working days
+            print(current.strftime('%Y-%m-%d'))
+        current += one_day
+
+if __name__ == "__main__":
+    print_working_days('2025-04-01', '2025-04-10')
