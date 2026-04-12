@@ -1,0 +1,36 @@
+# EXERCISE 2.4 (STR)
+
+# (a) Find Unicode code points for all characters of your name
+my_name = "Nikodem"  
+code_points = [ord(char) for char in my_name]
+print(f"(a) Unicode code points for '{my_name}': {code_points}")
+
+# (b) Create periodic table data as a list of tuples
+# Format: (Atomic Number, "Name", "Symbol", Atomic Weight)
+pt = [
+    (1, "Hydrogen", "H", 1),
+    (2, "Helium", "He", 4),
+    (3, "Lithium", "Li", 7),
+    (4, "Beryllium", "Be", 9),
+    (5, "Boron", "B", 11),
+    (6, "Carbon", "C", 12),
+    (7, "Nitrogen", "N", 14),
+    (8, "Oxygen", "O", 16),
+    (9, "Fluorine", "F", 19),
+    (10, "Neon", "Ne", 20)
+]
+
+# Print the formatted table
+print("\n(b) Periodic Table of Elements (first 10)")
+# Print header
+print("+---+--------------------+------+----------+")
+print("|No.|Name (en)           |Symbol|Weight (u)|")
+print("+---+--------------------+------+----------+")
+
+# Print each row using a for loop
+for (n, name, symbol, weight) in pt:
+    # Format: 3 right, 20 left, 6 center, 10 right
+    print(f"|{n:3d}|{name:<20s}|{symbol:^6s}|{weight:10d}|")
+
+# Print footer
+print("+---+--------------------+------+----------+")
