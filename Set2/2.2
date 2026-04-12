@@ -1,0 +1,20 @@
+# EXERCISE 2.2 (BOOL): Explain the results
+
+x = 5
+
+# Explanation: 'and' returns the first value if it's false, otherwise the last value.
+# Since 3+8 is 11 (truth), and x==5 is True, the result is 11.
+print(x == 5 and 3 + 8)  # 11
+
+# Explanation: x==4 is False, so 'and' returns the first false value (False) immediately.
+print(x == 4 and 3 + 8)  # False
+
+# Explanation: 3+8 is 11 (truth), so 'and' checks the next value x==5 (True). It returns the last value, which is True.
+print(3 + 8 and x == 5)  # True
+
+# Explanation: 3+8 is 11 (truth), so 'and' checks the next value x==4 (False). It returns the last value, which is False.
+print(3 + 8 and x == 4)  # False
+
+# Explanation: In Python, bool is a subclass of int. True is equivalent to 1, False to 0.
+print(isinstance(True, int))   # True (because bool is a subclass of int)
+print(isinstance(True, bool))  # True (because it is an instance of bool)
