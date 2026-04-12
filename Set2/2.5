@@ -1,0 +1,30 @@
+# EXERCISE 2.5 (LIST): Analyze a long string S
+
+# Define a long multi-line string
+S = """This is a long string.
+It contains multiple lines
+and various words for analysis.
+Some words are longer, like 'incomprehensibilities'."""
+
+# (a) Find the number of black characters (non-whitespace)
+black_chars = [char for char in S if not char.isspace()]
+black_count = len(black_chars)
+print(f"(a) Number of black characters: {black_count}")
+
+# (b) Find the number of words (sequence of black characters)
+words = S.split()
+word_count = len(words)
+print(f"(b) Number of words: {word_count}")
+
+# (c) Find the longest word
+longest_word = max(words, key=len)
+print(f"(c) Longest word: '{longest_word}' (length: {len(longest_word)})")
+
+# (d) Sort words
+# (1) Lexicographic order (alphabetical)
+lex_sorted = sorted(words)
+print(f"(d1) Lexicographically sorted: {lex_sorted}")
+
+# (2) By length
+length_sorted = sorted(words, key=len)
+print(f"(d2) Sorted by length: {length_sorted}")
