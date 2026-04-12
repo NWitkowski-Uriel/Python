@@ -1,0 +1,44 @@
+import random
+import matplotlib.pyplot as plt
+
+def random_walk(start):
+    """
+    Generator that yields successive positions of a 1D random walker.
+    Each step: +1 or -1 with equal probability.
+    """
+    pos = start
+    yield pos
+    while True:
+        step = random.choice([-1, 1])
+        pos += step
+        yield pos
+
+def run_experiments_with_generator(num_experiments, num_steps, start=0):
+    final_positions = []
+    for _ in range(num_experiments):
+        walker = random_walk(start)
+        next(walker)
+        for _ in range(num_steps):
+            final_pos = next(walker)
+        final_positions.append(final_pos)
+    return final_positions
+
+if __name__ == "__main__":
+    # Parameters
+    num_experiments = 10000
+    num_steps = 100
+    start = 0
+
+    # Run experiments
+    final_positions = run_experiments_with_generator(
+        num_experiments, num_steps, start
+    )
+
+    # Plot histogram
+    plt.hist(final_positions, bins=30, edgecolor='black', alpha=0.7)
+    plt.title(f'Random walk final positions\n'
+              f'{num_experiments} walks, {num_steps} steps each')
+    plt.xlabel('Final position')
+    plt.ylabel('Frequency')
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.show()
