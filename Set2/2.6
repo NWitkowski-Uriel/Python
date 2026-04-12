@@ -1,0 +1,18 @@
+# EXERCISE 2.6 (TUPLE): Find and explain the results
+
+t = (2, 4)
+
+# print(t[2])
+# Explanation for error: Tuples are indexed starting from 0. Index 2 would refer to the third element,
+# but this tuple only has two elements (index 0 and 1). So trying to access index 2 raises an IndexError.
+
+# t.append(6)
+# Explanation for error: Tuples are immutable in Python, meaning they cannot be changed after creation.
+# The 'append()' method is for lists, not tuples. Trying to use it on a tuple raises an AttributeError.
+
+# a, b = t ; print(a, b)
+# Explanation: This is tuple unpacking. It works correctly because it assigns the first element (2) to a,
+# and the second element (4) to b. This line would print "2 4".
+# To see it work, comment out the lines above that cause errors.
+a, b = t
+print(a, b)  # This will print: 2 4
