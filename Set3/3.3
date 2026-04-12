@@ -1,0 +1,19 @@
+# exercise_3_3.py
+import math
+
+n = 2022
+x = math.pi               
+word = "Python"
+polish = "książka"
+
+# Zapis do pliku (każda zmienna w osobnej linii)
+with open("vars.txt", "w", encoding="utf-8") as file:
+    file.write(f"{n}\n")
+    file.write(f"{x:.5f}\n")      
+    file.write(f"{word}\n")
+    file.write(f"{polish}\n")
+
+# Odczyt i wyświetlenie zawartości pliku
+with open("vars.txt", "r", encoding="utf-8") as file:
+    content = file.read()
+    print(content)
