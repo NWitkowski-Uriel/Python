@@ -1,0 +1,78 @@
+import math
+
+class Vector:
+    """Klasa reprezentująca wektor w przestrzeni 3D."""
+
+    def __init__(self, x, y, z):
+        """Inicjalizacja wektora o współrzędnych x, y, z."""
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def __repr__(self):
+        """Zwraca czytelną reprezentację wektora."""
+        return f"Vector({self.x}, {self.y}, {self.z})"
+
+    def __eq__(self, other):
+        """Porównanie dwóch wektorów (v == w)."""
+        if not isinstance(other, Vector):
+            return NotImplemented
+        return self.x == other.x and self.y == other.y and self.z == other.z
+
+    def __ne__(self, other):
+        """Porównanie nierówności (v != w)."""
+        return not self == other
+
+    def __add__(self, other):
+        """Dodawanie wektorów (v + w)."""
+        if not isinstance(other, Vector):
+            return NotImplemented
+        return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
+
+    def __sub__(self, other):
+        """Odejmowanie wektorów (v - w)."""
+        if not isinstance(other, Vector):
+            return NotImplemented
+        return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    def __mul__(self, other):
+        """Iloczyn skalarny (v * w)."""
+        if not isinstance(other, Vector):
+            return NotImplemented
+        return self.x * other.x + self.y * other.y + self.z * other.z
+
+    def cross(self, other):
+        """Iloczyn wektorowy (v.cross(w))."""
+        if not isinstance(other, Vector):
+            raise TypeError("Argument musi być typu Vector")
+        return Vector(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x
+        )
+
+    def length(self):
+        """Długość (norma) wektora."""
+        return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
+
+    def __hash__(self):
+        """Funkcja haszująca (wektory są traktowane jako niemodyfikowalne)."""
+        return hash((self.x, self.y, self.z))
+
+
+# Przykładowe testy 
+if __name__ == "__main__":
+    v = Vector(-1, 5, 2)
+    w = Vector(4, 0, 3)
+
+    assert v != w
+    assert v + w == Vector(3, 5, 5)
+    assert v - w == Vector(-5, 5, -1)
+    assert v * w == 2
+    assert v.cross(w) == Vector(15, 11, -20)
+    assert v.length() == math.sqrt(30)
+
+    S = set([v, v, w])
+    assert len(S) == 2
+
+    print("Wszystkie testy zakończone pomyślnie.")
