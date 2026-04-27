@@ -1,0 +1,43 @@
+import random
+
+def iter_a():
+    """Iterator: 0, 1, 0, 1, 0, 1, ..."""
+    value = 0
+    while True:
+        yield value
+        value = 1 - value
+
+def iter_b():
+    """Iterator: losowo 0 lub 1."""
+    while True:
+        yield random.randint(0, 1)
+
+def iter_c():
+    """Iterator: 0, 1, 0, -1, 0, 1, 0, -1, ..."""
+    pattern = [0, 1, 0, -1]
+    idx = 0
+    while True:
+        yield pattern[idx % len(pattern)]
+        idx += 1
+
+
+if __name__ == "__main__":
+    print("=== Zadanie 7.2: Iteratory ===")
+
+    print("\n--- Iterator a (0,1,0,1,...) ---")
+    it_a = iter_a()
+    for _ in range(8):
+        print(next(it_a), end=" ")
+    print()
+
+    print("\n--- Iterator b (losowe 0/1) ---")
+    it_b = iter_b()
+    for _ in range(10):
+        print(next(it_b), end=" ")
+    print()
+
+    print("\n--- Iterator c (0,1,0,-1,0,1,0,-1,...) ---")
+    it_c = iter_c()
+    for _ in range(12):
+        print(next(it_c), end=" ")
+    print()
