@@ -1,0 +1,69 @@
+import math
+
+class Vector:
+    """Klasa wektora 3D niezbędna do zadania 7.1."""
+    def __init__(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def __repr__(self):
+        return f"Vector({self.x}, {self.y}, {self.z})"
+
+    def dot(self, other):
+        """Iloczyn skalarny."""
+        return self.x * other.x + self.y * other.y + self.z * other.z
+
+    def norm(self):
+        """Długość (norma) wektora."""
+        return math.sqrt(self.dot(self))
+
+    def cross(self, other):
+        """Iloczyn wektorowy."""
+        return Vector(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x
+        )
+
+    def __mul__(self, scalar):
+        """Mnożenie przez skalar (do normalizacji)."""
+        return Vector(self.x * scalar, self.y * scalar, self.z * scalar)
+
+
+def find_axis(v1: Vector, v2: Vector) -> Vector:
+    """
+    Zwraca wektor jednostkowy prostopadły do v1 i v2.
+    Rzuca ValueError, gdy wektory są równoległe lub zerowe.
+    """
+    axis = v1.cross(v2)
+    length = axis.norm()
+    if length < 1e-10:
+        raise ValueError("Wektory są równoległe lub zerowe – nie można wyznaczyć osi.")
+    return axis * (1.0 / length)
+
+
+# Przykład użycia i proste testy
+if __name__ == "__main__":
+    print("=== Zadanie 7.1: find_axis ===")
+
+    # Test 1: wektory prostopadłe
+    v1 = Vector(1, 0, 0)
+    v2 = Vector(0, 1, 0)
+    axis = find_axis(v1, v2)
+    print(f"v1={v1}, v2={v2} -> oś = {axis} (długość: {axis.norm():.2f})")
+
+    # Test 2: przypadkowe wektory (sprawdzamy czy oś jest jednostkowa)
+    v1 = Vector(1, 2, 3)
+    v2 = Vector(4, 5, 6)
+    axis = find_axis(v1, v2)
+    print(f"v1={v1}, v2={v2} -> oś = {axis} (długość: {axis.norm():.2f})")
+
+    # Test 3: wektory równoległe – powinien być wyjątek
+    v1 = Vector(1, 0, 0)
+    v2 = Vector(2, 0, 0)
+    try:
+        axis = find_axis(v1, v2)
+        print(f"BŁĄD: nie zgłoszono wyjątku dla wektorów równoległych")
+    except ValueError as e:
+        print(f"Poprawnie zgłoszono wyjątek: {e}")
