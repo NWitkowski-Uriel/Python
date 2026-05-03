@@ -1,0 +1,22 @@
+# exercise_8_3.py
+import numpy as np
+
+# (a) Tablica 2D m1 o kształcie (4,5) – przykładowe wartości
+m1 = np.arange(1, 21).reshape(4, 5)   # cyfry 1..20 w 4 wierszach x 5 kolumn
+print("(a) m1 (oryginał):")
+print(m1)
+
+# (b) Odwrócenie każdego wiersza (widok)
+m2 = m1[:, ::-1]          # odwróć kolumny w każdym wierszu
+print("\n(b) m2 (odwrócone wiersze):")
+print(m2)
+
+# (c) Odwrócenie każdej kolumny (widok)
+m3 = m1[::-1, :]          # odwróć wiersze – przez to kolumny też są odwrócone
+print("\n(c) m3 (odwrócone kolumny):")
+print(m3)
+
+# (d) Usunięcie pierwszej i ostatniej kolumny oraz pierwszego i ostatniego wiersza
+m4 = m1[1:-1, 1:-1]       # wycinek bez krańcowych wierszy/kolumn
+print("\n(d) m4 (po usunięciu pierwszej/ostatniej kolumny i wiersza):")
+print(m4)
