@@ -1,0 +1,21 @@
+# exercise_8_1.py
+import numpy as np
+
+# (a) Tablica float od 0.0 do 1.0 z krokiem 0.1, kształt (11,)
+arr_a = np.arange(0.0, 1.1, 0.1)          # od 0.0 do 1.0 włącznie
+print("(a) arr_a (float, shape=11):")
+print(arr_a)
+print("-" * 50)
+
+# (b) Tablica zer (1 bajt) o kształcie (5,6), typ int8
+arr_b = np.zeros((5, 6), dtype=np.int8)   # 1 bajt = int8
+print("(b) arr_b (int8 zeros, shape=(5,6)):")
+print(arr_b)
+print("-" * 50)
+
+# (c) Tablica zespolona, potęgi x = 0+1j
+x = complex(0, 1)                         # jednostka urojona j
+arr_c = np.array([x**i for i in range(9)]) # 1, x, x^2, ..., x^8
+# równoważnie: arr_c = x ** np.arange(9)
+print("(c) arr_c (complex, powers of 0+1j):")
+print(arr_c)
