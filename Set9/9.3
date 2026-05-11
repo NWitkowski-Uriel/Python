@@ -1,0 +1,29 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def sum_distances_from_two_points(X, Y, p1=(-1,0), p2=(1,0)):
+    """
+    Oblicza sumę odległości euklidesowych każdego punktu (X[i], Y[i])
+    od dwóch zadanych punktów p1 i p2.
+    """
+    dist1 = np.sqrt((X - p1[0])**2 + (Y - p1[1])**2)
+    dist2 = np.sqrt((X - p2[0])**2 + (Y - p2[1])**2)
+    return dist1 + dist2
+
+# Siatka punktów w kwadracie [-2, 2] × [-2, 2]
+n = 500  # rozdzielczość siatki
+x_vals = np.linspace(-2, 2, n)
+y_vals = np.linspace(-2, 2, n)
+X, Y = np.meshgrid(x_vals, y_vals)
+
+Z = sum_distances_from_two_points(X, Y)
+
+plt.figure(figsize=(8, 6))
+plt.imshow(Z, extent=[-2, 2, -2, 2], origin='lower', cmap='viridis')
+plt.colorbar(label='Suma odległości')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Suma odległości od punktów (-1,0) i (1,0)')
+plt.tight_layout()
+plt.savefig('exercise_9_3.png')
+plt.show()
