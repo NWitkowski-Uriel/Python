@@ -1,0 +1,25 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Zakres x
+x = np.linspace(0, 10, 400)
+
+# Wartości funkcji
+y1 = np.sin(x)
+y2 = np.cos(x)
+y3 = np.exp(-x)
+
+# Tworzenie wykresu
+plt.figure(figsize=(8, 5))
+plt.plot(x, y1, 'r-',  label='sin(x)')        # czerwony, linia ciągła
+plt.plot(x, y2, 'g--', label='cos(x)')        # zielony, linia przerywana
+plt.plot(x, y3, 'b:',  label='exp(-x)')       # niebieski, linia kropkowana
+
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Wykresy funkcji sin(x), cos(x), exp(-x)')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig('exercise_9_1.png')
+plt.show()
