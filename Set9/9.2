@@ -1,0 +1,34 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+n = 100
+np.random.seed(42)  # zapewnia powtarzalność wyników
+x = np.random.rand(n)
+y = np.random.rand(n)
+
+# Określenie kolorów na podstawie odległości od (0,0)
+dist = np.sqrt(x**2 + y**2)
+colors = np.where(dist < 1, 'green', 'red')
+
+# Rozmiar markera proporcjonalny do |x| + |y|
+sizes = (np.abs(x) + np.abs(y)) * 100  # skalowanie dla lepszej wizualizacji
+
+plt.figure(figsize=(7, 7))
+scatter = plt.scatter(x, y, c=colors, s=sizes, alpha=0.7, edgecolors='k', linewidth=0.5)
+
+# Dodanie legendy
+import matplotlib.patches as mpatches
+green_patch = mpatches.Patch(color='green', label='odległość < 1')
+red_patch = mpatches.Patch(color='red', label='odległość ≥ 1')
+plt.legend(handles=[green_patch, red_patch])
+
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Losowe punkty w kwadracie jednostkowym')
+plt.xlim(0, 1)
+plt.ylim(0, 1)
+plt.grid(True, alpha=0.3)
+plt.gca().set_aspect('equal')
+plt.tight_layout()
+plt.savefig('exercise_9_2.png')
+plt.show()
