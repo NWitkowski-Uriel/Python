@@ -1,0 +1,28 @@
+"""Exercise 10.3: pd.DataFrame for the periodic table (10 elements)."""
+import pandas as pd
+
+# Lista pierwiastków (z Homework 2.4(b))
+pt = [
+    (1, "Hydrogen", "H", 1.008),
+    (2, "Helium", "He", 4.0026),
+    (3, "Lithium", "Li", 6.94),
+    (4, "Beryllium", "Be", 9.0122),
+    (5, "Boron", "B", 10.81),
+    (6, "Carbon", "C", 12.011),
+    (7, "Nitrogen", "N", 14.007),
+    (8, "Oxygen", "O", 15.999),
+    (9, "Fluorine", "F", 18.998),
+    (10, "Neon", "Ne", 20.180),
+]
+
+# Przygotuj słownik dla DataFrame
+data = {
+    "Name": [name for _, name, _, _ in pt],
+    "Symbol": [symbol for _, _, symbol, _ in pt],
+    "Weight": [weight for _, _, _, weight in pt],
+}
+
+# Utwórz DataFrame z indeksem zaczynającym się od 1 (liczba atomowa)
+df = pd.DataFrame(data, index=range(1, len(pt) + 1))
+df.index.name = "AtomicNumber"
+print(df)
