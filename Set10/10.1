@@ -1,0 +1,35 @@
+# 1. Sprawdź wersję Pythona (powinna być >= 3.6)
+python3 --version
+# Python 3.10.12
+
+# 2. Utwórz katalog projektu i wejdź do niego
+mkdir scicomppy_course
+cd scicomppy_course
+
+# 3. Utwórz wirtualne środowisko o nazwie "scicomp_env"
+python3 -m venv scicomp_env
+# (brak komunikatu – środowisko gotowe)
+
+# 4. Aktywacja (Linux/macOS)
+source scicomp_env/bin/activate
+# (Windows, alternatywnie: scicomp_env\Scripts\activate)
+
+# 5. Zainstaluj potrzebne pakiety
+pip install numpy matplotlib pandas
+# Successfully installed numpy-1.26.4 matplotlib-3.8.4 pandas-2.2.2 ...
+
+# 6. Sprawdź, czy instalacja się powiodła
+python -c "import numpy, matplotlib, pandas; print('OK')"
+# OK
+
+# 7. Wygeneruj plik requirements.txt (przydatny przy współpracy)
+pip freeze > requirements.txt
+# Zawartość pliku:
+# numpy==1.26.4
+# matplotlib==3.8.4
+# pandas==2.2.2
+# ... (zależności)
+
+# 8. Dezaktywacja środowiska po zakończeniu pracy
+deactivate
+# (znika prefiks (scicomp_env) z wiersza poleceń)
