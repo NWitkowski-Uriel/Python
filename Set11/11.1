@@ -1,0 +1,62 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parametry symulacji
+L = 1.0          # długość pręta [m]
+alpha = 0.01     # współczynnik dyfuzji cieplnej [m^2/s]
+T_total = 5.    # całkowity czas symulacji [s]
+
+Nx = 50          # liczba punktów przestrzennych
+Nt = 5000        # liczba kroków czasowych
+
+dx = L / (Nx - 1)
+dt = T_total / Nt
+
+# Sprawdzenie stabilności dla metody jawnej
+r = alpha * dt / (dx**2)
+if r > 0.5:
+    print(f"Uwaga: r = {r:.3f} > 0.5. Symulacja może być niestabilna!")
+    print("Zmniejsz dt lub zwiększ dx.")
+else:
+    print(f"Warunek stabilności spełniony: r = {r:.3f} ≤ 0.5")
+
+# Siatka przestrzenna i czasowa
+x = np.linspace(0, L, Nx)
+
+# Warunek początkowy: dwa piki Gaussa (ciągły i gładki)
+u = np.zeros(Nx)
+sigma = 0.05
+u += 0.6 * np.exp(-(x - 0.3)**2 / (2 * sigma**2))   # pierwszy pik przy x=0.3
+u += 0.8 * np.exp(-(x - 0.7)**2 / (2 * sigma**2))   # drugi pik przy x=0.7
+
+# Macierz przechowująca temperaturę w czasie (do wizualizacji)
+U = np.zeros((Nt, Nx))
+U[0, :] = u
+
+# Główna pętla czasowa (metoda jawna)
+for n in range(0, Nt - 1):
+    u_new = np.zeros(Nx)
+    # Obliczenia dla wszystkich punktów wewnętrznych
+    for i in range(1, Nx - 1):
+        u_new[i] = u[i] + r * (u[i-1] - 2*u[i] + u[i+1])
+    # Warunki brzegowe Dirichleta (ustalone końce o temp. 0)
+    u_new[0] = 0
+    u_new[-1] = 0
+    u = u_new
+    # Zapis co 50-ty krok czasowy dla wykresu (unikamy przeciążenia pamięci)
+    if n % (Nt // 100) == 0:
+        U[n, :] = u
+
+# Wizualizacja – wybrane chwile czasu
+time_indices = [0, Nt//10, Nt//5, Nt//4, Nt//2, Nt-1]   # 0, 10%, 20%, 25%, 50%, 100% czasu
+plt.figure(figsize=(10, 6))
+for idx in time_indices:
+    if idx < Nt:
+        t_actual = idx * dt
+        plt.plot(x, U[idx, :], label=f't = {t_actual:.3f} s')
+plt.xlabel('Położenie x [m]')
+plt.ylabel('Temperatura u(x,t)')
+plt.title('Rozwiązanie 1D równania ciepła (metoda jawna) – warunek początkowy: dwa piki Gaussa')
+plt.legend()
+plt.grid(True)
+plt.show()
