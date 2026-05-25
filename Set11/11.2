@@ -1,0 +1,77 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+
+# ========== PARAMETRY ==========
+L = 2.0
+c = 1.0
+T_total = 4.0
+
+Nx = 100
+Nt = 1000
+
+dx = L / (Nx - 1)
+dt = T_total / Nt
+
+CFL = c * dt / dx
+print(f"CFL = {CFL:.3f} (wymagane ≤ 1.0 dla stabilności)")
+if CFL > 1.0:
+    raise ValueError("Warunek CFL naruszony – symulacja niestabilna")
+
+# Siatka przestrzenna
+x = np.linspace(0, L, Nx)
+
+# Gładki warunek początkowy u(x,0) = sin²(πx/L)·exp(-20·(x-1)²)
+u0 = np.sin(np.pi * x / L)**2 * np.exp(-20 * (x - 1.0)**2)
+
+# Macierz rozwiązania U(t, x)
+U = np.zeros((Nt, Nx))
+U[0, :] = u0
+
+# Pierwszy krok czasowy (zakładamy spoczynek: ∂u/∂t = 0 w t=0)
+for i in range(1, Nx - 1):
+    U[1, i] = U[0, i] + 0.5 * CFL**2 * (U[0, i-1] - 2*U[0, i] + U[0, i+1])
+
+# ========== ROZWIĄZYWANIE (schemat różnic centralnych) ==========
+for n in range(1, Nt - 1):
+    for i in range(1, Nx - 1):
+        U[n+1, i] = 2 * (1 - CFL**2) * U[n, i] - U[n-1, i] + \
+                    CFL**2 * (U[n, i+1] + U[n, i-1])
+    # Warunki brzegowe (zamocowane końce)
+    U[n+1, 0] = 0.0
+    U[n+1, -1] = 0.0
+
+# ========== STATYCZNY WYKRES (wybrane chwile) ==========
+plt.figure(figsize=(10, 5))
+time_steps = [0, Nt//8, Nt//4, Nt//2, 3*Nt//4, Nt-1]
+for step in time_steps:
+    t_actual = step * dt
+    plt.plot(x, U[step, :], label=f't = {t_actual:.2f} s')
+plt.xlabel('x [m]')
+plt.ylabel('Wychylenie u(x,t)')
+plt.title('Równanie falowe – profile w wybranych chwilach')
+plt.legend()
+plt.grid(True)
+plt.savefig('wave_equation_profiles.png', dpi=300)
+plt.show()
+
+# ========== ANIMACJA ==========
+fig, ax = plt.subplots(figsize=(8, 5))
+line, = ax.plot(x, U[0, :], lw=2, color='blue')
+ax.set_xlim(0, L)
+ax.set_ylim(-1, 1)
+ax.set_xlabel('x [m]')
+ax.set_ylabel('Wychylenie u(x,t)')
+ax.set_title('Rozchodzenie się fali w strunie')
+ax.grid(True)
+time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes)
+
+def animate(frame):
+    line.set_ydata(U[frame, :])
+    time_text.set_text(f't = {frame * dt:.2f} s')
+    return line, time_text
+
+anim = FuncAnimation(fig, animate, frames=Nt, interval=20, blit=True)
+plt.show()
+
+anim.save('wave_equation_animation.mp4', writer='ffmpeg', fps=30)
