@@ -1,62 +1,80 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
-# Parametry symulacji
-L = 1.0          # długość pręta [m]
-alpha = 0.01     # współczynnik dyfuzji cieplnej [m^2/s]
-T_total = 5.    # całkowity czas symulacji [s]
+# ========== PARAMETRY ==========
+L = 1.0
+alpha = 0.01
+T_total = 5.0
 
-Nx = 50          # liczba punktów przestrzennych
-Nt = 5000        # liczba kroków czasowych
+Nx = 50
+Nt = 5000
 
 dx = L / (Nx - 1)
 dt = T_total / Nt
 
-# Sprawdzenie stabilności dla metody jawnej
+# Sprawdzenie stabilności
 r = alpha * dt / (dx**2)
-if r > 0.5:
-    print(f"Uwaga: r = {r:.3f} > 0.5. Symulacja może być niestabilna!")
-    print("Zmniejsz dt lub zwiększ dx.")
-else:
-    print(f"Warunek stabilności spełniony: r = {r:.3f} ≤ 0.5")
+print(f"r = {r:.3f} (wymagane ≤ 0.5 dla stabilności)")
 
-# Siatka przestrzenna i czasowa
+# Siatka przestrzenna
 x = np.linspace(0, L, Nx)
 
-# Warunek początkowy: dwa piki Gaussa (ciągły i gładki)
-u = np.zeros(Nx)
+# Warunek początkowy (dwa piki Gaussa)
 sigma = 0.05
-u += 0.6 * np.exp(-(x - 0.3)**2 / (2 * sigma**2))   # pierwszy pik przy x=0.3
-u += 0.8 * np.exp(-(x - 0.7)**2 / (2 * sigma**2))   # drugi pik przy x=0.7
+u0 = 0.6 * np.exp(-(x - 0.3)**2 / (2 * sigma**2)) + \
+     0.8 * np.exp(-(x - 0.7)**2 / (2 * sigma**2))
 
-# Macierz przechowująca temperaturę w czasie (do wizualizacji)
+# Macierz do przechowania całego rozwiązania (Nt x Nx)
 U = np.zeros((Nt, Nx))
-U[0, :] = u
+U[0, :] = u0
 
-# Główna pętla czasowa (metoda jawna)
-for n in range(0, Nt - 1):
+# ========== ROZWIĄZYWANIE ==========
+u = u0.copy()
+for n in range(Nt - 1):
     u_new = np.zeros(Nx)
-    # Obliczenia dla wszystkich punktów wewnętrznych
+    # Punkty wewnętrzne
     for i in range(1, Nx - 1):
         u_new[i] = u[i] + r * (u[i-1] - 2*u[i] + u[i+1])
-    # Warunki brzegowe Dirichleta (ustalone końce o temp. 0)
-    u_new[0] = 0
-    u_new[-1] = 0
+    # Warunki brzegowe Dirichleta
+    u_new[0] = 0.0
+    u_new[-1] = 0.0
     u = u_new
-    # Zapis co 50-ty krok czasowy dla wykresu (unikamy przeciążenia pamięci)
-    if n % (Nt // 100) == 0:
-        U[n, :] = u
+    U[n+1, :] = u
 
-# Wizualizacja – wybrane chwile czasu
-time_indices = [0, Nt//10, Nt//5, Nt//4, Nt//2, Nt-1]   # 0, 10%, 20%, 25%, 50%, 100% czasu
-plt.figure(figsize=(10, 6))
+# ========== STATYCZNY WYKRES (kilka chwil) ==========
+plt.figure(figsize=(10, 5))
+time_indices = [0, Nt//10, Nt//5, Nt//4, Nt//2, Nt-1]
 for idx in time_indices:
-    if idx < Nt:
-        t_actual = idx * dt
-        plt.plot(x, U[idx, :], label=f't = {t_actual:.3f} s')
-plt.xlabel('Położenie x [m]')
+    t_actual = idx * dt
+    plt.plot(x, U[idx, :], label=f't = {t_actual:.3f} s')
+plt.xlabel('x [m]')
 plt.ylabel('Temperatura u(x,t)')
-plt.title('Rozwiązanie 1D równania ciepła (metoda jawna) – warunek początkowy: dwa piki Gaussa')
+plt.title('Równanie ciepła – profile w wybranych chwilach')
 plt.legend()
 plt.grid(True)
+plt.savefig('heat_equation_profiles.png', dpi=300)
 plt.show()
+
+# ========== ANIMACJA ==========
+fig, ax = plt.subplots(figsize=(8, 5))
+line, = ax.plot(x, U[0, :], lw=2, color='red')
+ax.set_xlim(0, L)
+ax.set_ylim(0, 1.0)
+ax.set_xlabel('x [m]')
+ax.set_ylabel('Temperatura u(x,t)')
+ax.set_title('Ewolucja temperatury w czasie')
+ax.grid(True)
+time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes)
+
+def animate(frame):
+    line.set_ydata(U[frame, :])
+    time_text.set_text(f't = {frame * dt:.3f} s')
+    return line, time_text
+
+anim = FuncAnimation(fig, animate, frames=Nt, interval=20, blit=True)
+
+# Wyświetlenie animacji (w notebooku lub w oknie)
+plt.show()
+
+anim.save('heat_equation_animation.mp4', writer='ffmpeg', fps=30)
