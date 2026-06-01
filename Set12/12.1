@@ -1,0 +1,62 @@
+import math
+import unittest
+
+from vector import Vector
+
+
+class TestVector(unittest.TestCase):
+    """Tests of basic algebraic operations on 3D vectors."""
+
+    def setUp(self):
+        """Create two sample vectors used in many tests."""
+        self.v = Vector(-1, 5, 2)
+        self.w = Vector(4, 0, 3)
+
+    def test_repr(self):
+        """Check the textual representation of a vector."""
+        self.assertEqual(repr(self.v), "Vector(-1, 5, 2)")
+
+    def test_equality_and_inequality(self):
+        """Check equality and inequality operators."""
+        self.assertEqual(Vector(1, 2, 3), Vector(1, 2, 3))
+        self.assertNotEqual(self.v, self.w)
+
+    def test_addition(self):
+        """Check addition of two vectors."""
+        self.assertEqual(self.v + self.w, Vector(3, 5, 5))
+
+    def test_subtraction(self):
+        """Check subtraction of two vectors."""
+        self.assertEqual(self.v - self.w, Vector(-5, 5, -1))
+
+    def test_scalar_product(self):
+        """Check scalar product calculated with the * operator."""
+        self.assertEqual(self.v * self.w, 2)
+
+    def test_cross_product(self):
+        """Check vector product calculated with the cross method."""
+        self.assertEqual(self.v.cross(self.w), Vector(15, 11, -20))
+
+    def test_cross_product_type_error(self):
+        """Check that cross product accepts only Vector arguments."""
+        with self.assertRaises(TypeError):
+            self.v.cross((1, 2, 3))
+
+    def test_length(self):
+        """Check Euclidean length of a vector."""
+        self.assertAlmostEqual(self.v.length(), math.sqrt(30))
+
+    def test_hashing(self):
+        """Check that equal vectors are stored once in a set."""
+        vector_set = {self.v, self.v, self.w, Vector(-1, 5, 2)}
+        self.assertEqual(len(vector_set), 2)
+
+    def test_wrong_operand_returns_not_implemented(self):
+        """Check unsupported operations with a non-vector object."""
+        self.assertEqual(Vector.__add__(self.v, 1), NotImplemented)
+        self.assertEqual(Vector.__sub__(self.v, 1), NotImplemented)
+        self.assertEqual(Vector.__mul__(self.v, 1), NotImplemented)
+
+
+if __name__ == "__main__":
+    unittest.main()
