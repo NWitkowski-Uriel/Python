@@ -1,0 +1,53 @@
+import matplotlib.pyplot as plt
+import networkx as nx
+
+
+def create_random_graph(number_of_nodes=8, edge_probability=0.35, seed=12):
+    """Return a random undirected graph with more than five nodes."""
+    if number_of_nodes <= 5:
+        raise ValueError("The graph must have more than five nodes.")
+
+    graph = nx.gnp_random_graph(
+        n=number_of_nodes,
+        p=edge_probability,
+        seed=seed,
+        directed=False,
+    )
+
+    return graph
+
+
+def draw_graph(graph, filename="random_graph.png"):
+    """Draw a graph and save it to a PNG file."""
+    positions = nx.spring_layout(graph, seed=12)
+
+    plt.figure(figsize=(7, 5))
+    nx.draw_networkx(
+        graph,
+        pos=positions,
+        with_labels=True,
+        node_size=800,
+        font_size=11,
+        width=1.8,
+    )
+    plt.title("Random undirected graph")
+    plt.axis("off")
+    plt.tight_layout()
+    plt.savefig(filename, dpi=200)
+    plt.close()
+
+
+def main():
+    """Create the graph, print basic information and save the figure."""
+    graph = create_random_graph()
+
+    print(f"Number of nodes: {graph.number_of_nodes()}")
+    print(f"Number of edges: {graph.number_of_edges()}")
+    print(f"Nodes: {list(graph.nodes())}")
+    print(f"Edges: {list(graph.edges())}")
+
+    draw_graph(graph)
+
+
+if __name__ == "__main__":
+    main()
