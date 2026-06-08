@@ -1,0 +1,33 @@
+from pathlib import Path
+
+from IPython.display import display
+from PIL import Image
+
+# Ścieżki do plików
+image_path = Path("cbm_phase_diagram.png")
+thumbnail_path = Path("cbm_phase_diagram_thumbnail_128.png")
+
+# Sprawdzenie, czy obraz istnieje
+if not image_path.exists():
+    raise FileNotFoundError(f"Nie znaleziono pliku: {image_path}")
+
+# Wczytanie obrazu i wypisanie podstawowych informacji
+with Image.open(image_path) as img:
+    print(f"Format: {img.format}")
+    print(f"Mode:   {img.mode}")
+    print(f"Size:   {img.size}")
+    print(f"Width:  {img.width} px")
+    print(f"Height: {img.height} px")
+
+    display(img)
+
+# Utworzenie miniatury 128 x 128 z zachowaniem proporcji
+with Image.open(image_path) as img:
+    thumbnail = img.copy()
+    thumbnail.thumbnail((128, 128))
+    thumbnail.save(thumbnail_path)
+
+print(f"Miniatura zapisana jako: {thumbnail_path}")
+print(f"Rozmiar miniatury: {thumbnail.size}")
+
+display(thumbnail)
