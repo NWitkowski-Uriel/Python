@@ -1,0 +1,568 @@
+# %% [markdown]
+# # Analiza giełdowa spółek GPW w Pythonie
+#
+# Projekt zaliczeniowy z Pythona.
+#
+# Wykonywane elementy:
+# - pobranie danych giełdowych,
+# - obróbka danych tabelarycznych,
+# - wykresy cen akcji,
+# - średnie kroczące,
+# - dzienne stopy zwrotu,
+# - zmienność,
+# - obsunięcie kapitału,
+# - korelacje,
+# - prosta strategia przecięcia średnich MA20/MA50.
+#
+# Dane są pobierane przez bibliotekę yfinance.
+# Dla spółek GPW używamy symboli Yahoo Finance z końcówką `.WA`, np.:
+# CDR.WA, PKO.WA, KGH.WA.
+
+# %%
+import os
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import yfinance as yf
+
+
+# %% [markdown]
+# ## 1. Ustawienia projektu
+
+# %%
+SYMBOLS = {
+    "CDR.WA": "CD Projekt",
+    "PKO.WA": "PKO BP",
+    "KGH.WA": "KGHM",
+    "PKN.WA": "Orlen",
+    "PGE.WA": "PGE",
+}
+
+START_DATE = "2020-01-01"
+END_DATE = None
+
+OUTPUT_DIR = Path("wyniki_analizy_gieldowej")
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+plt.rcParams["figure.figsize"] = (11, 6)
+plt.rcParams["axes.grid"] = True
+
+
+# %% [markdown]
+# ## 2. Funkcje pomocnicze
+
+# %%
+def download_stock_data(symbol: str, start: str, end: str | None = None) -> pd.DataFrame:
+    """
+    Pobiera dzienne dane giełdowe z Yahoo Finance przez yfinance.
+
+    Parametry
+    ---------
+    symbol:
+        Symbol Yahoo Finance, np. 'CDR.WA'.
+    start:
+        Data początkowa w formacie 'YYYY-MM-DD'.
+    end:
+        Data końcowa w formacie 'YYYY-MM-DD' albo None.
+
+    Zwraca
+    ------
+    DataFrame z kolumnami:
+    Date, Open, High, Low, Close, Adj Close, Volume, Symbol
+    """
+    df = yf.download(
+        symbol,
+        start=start,
+        end=end,
+        interval="1d",
+        auto_adjust=False,
+        progress=False,
+    )
+
+    if df.empty:
+        raise ValueError(
+            f"Nie udało się pobrać danych dla symbolu {symbol}. "
+            "Sprawdź symbol w Yahoo Finance, np. CDR.WA dla CD Projekt."
+        )
+
+    # yfinance czasem zwraca MultiIndex przy nowszych wersjach.
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+
+    df = df.reset_index()
+    df["Symbol"] = symbol
+
+    expected_columns = ["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume", "Symbol"]
+    available_columns = [col for col in expected_columns if col in df.columns]
+    df = df[available_columns]
+
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df.sort_values("Date").reset_index(drop=True)
+
+    return df
+
+
+def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Dodaje podstawowe wskaźniki:
+    - dzienną stopę zwrotu,
+    - skumulowaną stopę zwrotu,
+    - średnie kroczące,
+    - zmienność kroczącą,
+    - obsunięcie kapitału.
+    """
+    df = df.copy()
+
+    df["Return"] = df["Close"].pct_change()
+    df["Cumulative_Return"] = (1.0 + df["Return"]).cumprod()
+
+    df["MA20"] = df["Close"].rolling(window=20).mean()
+    df["MA50"] = df["Close"].rolling(window=50).mean()
+    df["MA200"] = df["Close"].rolling(window=200).mean()
+
+    df["Volatility_20"] = df["Return"].rolling(window=20).std() * np.sqrt(252)
+
+    df["Running_Max"] = df["Cumulative_Return"].cummax()
+    df["Drawdown"] = df["Cumulative_Return"] / df["Running_Max"] - 1.0
+
+    return df
+
+
+def calculate_summary(df: pd.DataFrame, company_name: str) -> dict:
+    """
+    Oblicza podstawowe statystyki dla jednej spółki.
+    """
+    returns = df["Return"].dropna()
+
+    total_return = df["Cumulative_Return"].iloc[-1] - 1.0
+    annual_return = (1.0 + total_return) ** (252 / len(df)) - 1.0
+    annual_volatility = returns.std() * np.sqrt(252)
+
+    if annual_volatility != 0:
+        sharpe_ratio = annual_return / annual_volatility
+    else:
+        sharpe_ratio = np.nan
+
+    max_drawdown = df["Drawdown"].min()
+
+    return {
+        "Spółka": company_name,
+        "Symbol": df["Symbol"].iloc[0],
+        "Liczba sesji": len(df),
+        "Cena początkowa": df["Close"].iloc[0],
+        "Cena końcowa": df["Close"].iloc[-1],
+        "Stopa zwrotu całkowita": total_return,
+        "Stopa zwrotu roczna": annual_return,
+        "Zmienność roczna": annual_volatility,
+        "Sharpe bez stopy wolnej od ryzyka": sharpe_ratio,
+        "Maksymalne obsunięcie": max_drawdown,
+    }
+
+
+def save_plot(filename: str) -> None:
+    """
+    Zapisuje aktualny wykres do katalogu wynikowego.
+    """
+    path = OUTPUT_DIR / filename
+    plt.tight_layout()
+    plt.savefig(path, dpi=150)
+    print(f"Zapisano wykres: {path}")
+
+
+# %% [markdown]
+# ## 3. Pobieranie danych
+
+# %%
+all_data = {}
+
+for symbol, company_name in SYMBOLS.items():
+    print(f"Pobieram dane: {symbol} ({company_name})")
+    data = download_stock_data(symbol, START_DATE, END_DATE)
+    data = add_indicators(data)
+    all_data[symbol] = data
+
+    output_csv = OUTPUT_DIR / f"{symbol.replace('.', '_')}_dane.csv"
+    data.to_csv(output_csv, index=False)
+    print(f"Zapisano dane: {output_csv}")
+
+print("Pobrano dane dla wszystkich spółek.")
+
+
+# %% [markdown]
+# ## 4. Podgląd danych
+
+# %%
+for symbol, data in all_data.items():
+    print("\n" + "=" * 80)
+    print(symbol, SYMBOLS[symbol])
+    print(data.head())
+    print(data.tail())
+
+
+# %% [markdown]
+# ## 5. Wykres cen zamknięcia
+
+# %%
+plt.figure()
+
+for symbol, data in all_data.items():
+    plt.plot(data["Date"], data["Close"], label=SYMBOLS[symbol])
+
+plt.title("Ceny zamknięcia akcji")
+plt.xlabel("Data")
+plt.ylabel("Cena zamknięcia [PLN]")
+plt.legend()
+save_plot("01_ceny_zamkniecia.png")
+plt.show()
+
+
+# %% [markdown]
+# ## 6. Porównanie znormalizowanych cen
+#
+# Normalizujemy ceny tak, aby pierwsza obserwacja była równa 100.
+# Dzięki temu można porównać względną zmianę cen różnych spółek.
+
+# %%
+plt.figure()
+
+for symbol, data in all_data.items():
+    normalized_price = 100.0 * data["Close"] / data["Close"].iloc[0]
+    plt.plot(data["Date"], normalized_price, label=SYMBOLS[symbol])
+
+plt.title("Znormalizowane ceny akcji")
+plt.xlabel("Data")
+plt.ylabel("Cena znormalizowana, pierwszy dzień = 100")
+plt.legend()
+save_plot("02_ceny_znormalizowane.png")
+plt.show()
+
+
+# %% [markdown]
+# ## 7. Średnie kroczące dla każdej spółki
+
+# %%
+for symbol, data in all_data.items():
+    plt.figure()
+
+    plt.plot(data["Date"], data["Close"], label="Cena zamknięcia")
+    plt.plot(data["Date"], data["MA20"], label="MA20")
+    plt.plot(data["Date"], data["MA50"], label="MA50")
+    plt.plot(data["Date"], data["MA200"], label="MA200")
+
+    plt.title(f"{SYMBOLS[symbol]}: cena i średnie kroczące")
+    plt.xlabel("Data")
+    plt.ylabel("Cena [PLN]")
+    plt.legend()
+
+    filename = f"03_srednie_kroczace_{symbol.replace('.', '_')}.png"
+    save_plot(filename)
+    plt.show()
+
+
+# %% [markdown]
+# ## 8. Dzienne stopy zwrotu
+
+# %%
+plt.figure()
+
+for symbol, data in all_data.items():
+    plt.plot(data["Date"], data["Return"], label=SYMBOLS[symbol], alpha=0.8)
+
+plt.title("Dzienne stopy zwrotu")
+plt.xlabel("Data")
+plt.ylabel("Dzienna stopa zwrotu")
+plt.legend()
+save_plot("04_dzienne_stopy_zwrotu.png")
+plt.show()
+
+
+# %% [markdown]
+# ## 9. Histogramy dziennych stóp zwrotu
+
+# %%
+for symbol, data in all_data.items():
+    plt.figure()
+
+    returns = data["Return"].dropna()
+    plt.hist(returns, bins=50, edgecolor="black")
+
+    plt.title(f"{SYMBOLS[symbol]}: histogram dziennych stóp zwrotu")
+    plt.xlabel("Dzienna stopa zwrotu")
+    plt.ylabel("Liczba sesji")
+
+    filename = f"05_histogram_stop_zwrotu_{symbol.replace('.', '_')}.png"
+    save_plot(filename)
+    plt.show()
+
+
+# %% [markdown]
+# ## 10. Zmienność krocząca
+#
+# Zmienność obliczamy jako odchylenie standardowe dziennych stóp zwrotu
+# w oknie 20 sesji, przeskalowane przez pierwiastek z 252 sesji giełdowych.
+
+# %%
+plt.figure()
+
+for symbol, data in all_data.items():
+    plt.plot(data["Date"], data["Volatility_20"], label=SYMBOLS[symbol])
+
+plt.title("Roczna zmienność krocząca w oknie 20 sesji")
+plt.xlabel("Data")
+plt.ylabel("Zmienność roczna")
+plt.legend()
+save_plot("06_zmiennosc_kroczaca.png")
+plt.show()
+
+
+# %% [markdown]
+# ## 11. Obsunięcie kapitału
+#
+# Obsunięcie pokazuje, o ile wartość inwestycji spadła względem wcześniejszego maksimum.
+
+# %%
+plt.figure()
+
+for symbol, data in all_data.items():
+    plt.plot(data["Date"], data["Drawdown"], label=SYMBOLS[symbol])
+
+plt.title("Obsunięcie kapitału")
+plt.xlabel("Data")
+plt.ylabel("Drawdown")
+plt.legend()
+save_plot("07_obsuniecie_kapitalu.png")
+plt.show()
+
+
+# %% [markdown]
+# ## 12. Korelacje stóp zwrotu
+
+# %%
+returns_df = pd.DataFrame()
+
+for symbol, data in all_data.items():
+    returns_df[SYMBOLS[symbol]] = data.set_index("Date")["Return"]
+
+correlation_matrix = returns_df.corr()
+
+print("Macierz korelacji dziennych stóp zwrotu:")
+print(correlation_matrix)
+
+correlation_csv = OUTPUT_DIR / "08_macierz_korelacji.csv"
+correlation_matrix.to_csv(correlation_csv)
+print(f"Zapisano macierz korelacji: {correlation_csv}")
+
+
+# %%
+plt.figure()
+
+plt.imshow(correlation_matrix, aspect="auto")
+plt.colorbar(label="Korelacja")
+
+plt.xticks(range(len(correlation_matrix.columns)), correlation_matrix.columns, rotation=45)
+plt.yticks(range(len(correlation_matrix.index)), correlation_matrix.index)
+
+for i in range(len(correlation_matrix.index)):
+    for j in range(len(correlation_matrix.columns)):
+        value = correlation_matrix.iloc[i, j]
+        plt.text(j, i, f"{value:.2f}", ha="center", va="center")
+
+plt.title("Macierz korelacji dziennych stóp zwrotu")
+save_plot("08_macierz_korelacji.png")
+plt.show()
+
+
+# %% [markdown]
+# ## 13. Tabela podsumowująca wyniki
+
+# %%
+summary_rows = []
+
+for symbol, data in all_data.items():
+    summary_rows.append(calculate_summary(data, SYMBOLS[symbol]))
+
+summary_df = pd.DataFrame(summary_rows)
+
+percentage_columns = [
+    "Stopa zwrotu całkowita",
+    "Stopa zwrotu roczna",
+    "Zmienność roczna",
+    "Maksymalne obsunięcie",
+]
+
+print("Tabela podsumowująca:")
+print(summary_df)
+
+summary_csv = OUTPUT_DIR / "09_podsumowanie.csv"
+summary_df.to_csv(summary_csv, index=False)
+print(f"Zapisano tabelę podsumowującą: {summary_csv}")
+
+
+# %%
+summary_display = summary_df.copy()
+
+for col in percentage_columns:
+    summary_display[col] = 100.0 * summary_display[col]
+
+print("\nTabela podsumowująca, wartości procentowe przemnożone przez 100:")
+print(summary_display)
+
+
+# %% [markdown]
+# ## 14. Porównanie zysku i ryzyka
+
+# %%
+plt.figure()
+
+x = summary_df["Zmienność roczna"]
+y = summary_df["Stopa zwrotu roczna"]
+
+plt.scatter(x, y)
+
+for _, row in summary_df.iterrows():
+    plt.annotate(
+        row["Spółka"],
+        (row["Zmienność roczna"], row["Stopa zwrotu roczna"]),
+        textcoords="offset points",
+        xytext=(5, 5),
+    )
+
+plt.title("Porównanie rocznej stopy zwrotu i ryzyka")
+plt.xlabel("Zmienność roczna")
+plt.ylabel("Roczna stopa zwrotu")
+save_plot("10_ryzyko_vs_zwrot.png")
+plt.show()
+
+
+# %% [markdown]
+# ## 15. Prosta strategia inwestycyjna MA20/MA50
+#
+# Testujemy bardzo prostą strategię:
+#
+# - kupujemy, gdy MA20 > MA50,
+# - nie trzymamy akcji, gdy MA20 <= MA50.
+#
+# Jest to tylko przykład dydaktyczny, a nie rekomendacja inwestycyjna.
+
+# %%
+def moving_average_strategy(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Prosta strategia przecięcia średnich MA20 i MA50.
+    """
+    result = df.copy()
+
+    result["Signal"] = 0
+    result.loc[result["MA20"] > result["MA50"], "Signal"] = 1
+
+    # Przesunięcie o jeden dzień usuwa błąd patrzenia w przyszłość.
+    result["Position"] = result["Signal"].shift(1).fillna(0)
+
+    result["Strategy_Return"] = result["Position"] * result["Return"]
+    result["Strategy_Cumulative_Return"] = (1.0 + result["Strategy_Return"].fillna(0)).cumprod()
+
+    return result
+
+
+strategy_results = {}
+
+for symbol, data in all_data.items():
+    strategy_results[symbol] = moving_average_strategy(data)
+
+
+# %%
+for symbol, data in strategy_results.items():
+    plt.figure()
+
+    plt.plot(data["Date"], data["Cumulative_Return"], label="Kup i trzymaj")
+    plt.plot(data["Date"], data["Strategy_Cumulative_Return"], label="Strategia MA20/MA50")
+
+    plt.title(f"{SYMBOLS[symbol]}: strategia MA20/MA50")
+    plt.xlabel("Data")
+    plt.ylabel("Wartość kapitału, start = 1")
+    plt.legend()
+
+    filename = f"11_strategia_ma_{symbol.replace('.', '_')}.png"
+    save_plot(filename)
+    plt.show()
+
+
+# %% [markdown]
+# ## 16. Podsumowanie strategii
+
+# %%
+strategy_summary = []
+
+for symbol, data in strategy_results.items():
+    buy_and_hold_return = data["Cumulative_Return"].iloc[-1] - 1.0
+    strategy_return = data["Strategy_Cumulative_Return"].iloc[-1] - 1.0
+
+    strategy_summary.append(
+        {
+            "Spółka": SYMBOLS[symbol],
+            "Symbol": symbol,
+            "Stopa zwrotu kup i trzymaj": buy_and_hold_return,
+            "Stopa zwrotu strategii MA20/MA50": strategy_return,
+            "Różnica": strategy_return - buy_and_hold_return,
+        }
+    )
+
+strategy_summary_df = pd.DataFrame(strategy_summary)
+
+print("Podsumowanie strategii:")
+print(strategy_summary_df)
+
+strategy_csv = OUTPUT_DIR / "12_podsumowanie_strategii.csv"
+strategy_summary_df.to_csv(strategy_csv, index=False)
+print(f"Zapisano podsumowanie strategii: {strategy_csv}")
+
+
+# %% [markdown]
+# ## 17. Wnioski automatyczne
+
+# %%
+best_total_return = summary_df.sort_values("Stopa zwrotu całkowita", ascending=False).iloc[0]
+lowest_volatility = summary_df.sort_values("Zmienność roczna", ascending=True).iloc[0]
+largest_drawdown = summary_df.sort_values("Maksymalne obsunięcie", ascending=True).iloc[0]
+best_strategy = strategy_summary_df.sort_values(
+    "Stopa zwrotu strategii MA20/MA50",
+    ascending=False,
+).iloc[0]
+
+print("\nWNIOSKI")
+print("=" * 80)
+
+print(
+    f"Najwyższą całkowitą stopę zwrotu w badanym okresie uzyskała spółka "
+    f"{best_total_return['Spółka']} "
+    f"({100 * best_total_return['Stopa zwrotu całkowita']:.2f}%)."
+)
+
+print(
+    f"Najniższą roczną zmienność miała spółka "
+    f"{lowest_volatility['Spółka']} "
+    f"({100 * lowest_volatility['Zmienność roczna']:.2f}%)."
+)
+
+print(
+    f"Największe maksymalne obsunięcie kapitału wystąpiło dla spółki "
+    f"{largest_drawdown['Spółka']} "
+    f"({100 * largest_drawdown['Maksymalne obsunięcie']:.2f}%)."
+)
+
+print(
+    f"Najlepszy wynik prostej strategii MA20/MA50 uzyskano dla spółki "
+    f"{best_strategy['Spółka']} "
+    f"({100 * best_strategy['Stopa zwrotu strategii MA20/MA50']:.2f}%)."
+)
+
+print("\nUwaga: analiza ma charakter dydaktyczny i nie jest rekomendacją inwestycyjną.")
+
+
+# %% [markdown]
+# ## 18. Koniec programu
+
+# %%
+print("\nAnaliza zakończona.")
+print(f"Wyniki zapisano w katalogu: {OUTPUT_DIR.resolve()}")
