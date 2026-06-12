@@ -37,6 +37,38 @@ Projekt wykonuje następujące elementy:
 11. Przetestowanie prostej strategii inwestycyjnej MA20/MA50.
 12. Porównanie strategii MA20/MA50 ze strategią „kup i trzymaj”.
 
+## Format danych pobieranych z Yahoo Finance
+
+Dane giełdowe są pobierane z serwisu Yahoo Finance za pomocą biblioteki `yfinance`. Dla każdej analizowanej spółki wykorzystywany jest jej symbol giełdowy w formacie zgodnym z Yahoo Finance. W przypadku spółek notowanych na Giełdzie Papierów Wartościowych w Warszawie stosowana jest końcówka `.WA`, np. `CDR.WA`, `PKO.WA`, `KGH.WA`, `PKN.WA` oraz `PGE.WA`.
+
+Dane są pobierane w interwale dziennym, od daty `2020-01-01` do najnowszej dostępnej daty. Każdy wiersz danych odpowiada jednej sesji giełdowej. Podstawowy zestaw pobieranych kolumn obejmuje:
+
+* `Date` — data sesji giełdowej,
+* `Open` — cena otwarcia,
+* `High` — najwyższa cena w trakcie sesji,
+* `Low` — najniższa cena w trakcie sesji,
+* `Close` — cena zamknięcia,
+* `Adj Close` — skorygowana cena zamknięcia,
+* `Volume` — wolumen obrotu.
+
+W projekcie do większości obliczeń wykorzystywana jest przede wszystkim kolumna `Close`, czyli cena zamknięcia. Na jej podstawie liczone są dzienne stopy zwrotu, skumulowane stopy zwrotu, średnie kroczące, zmienność oraz obsunięcie kapitału. Dodatkowo do danych każdej spółki dodawana jest kolumna `Symbol`, która pozwala jednoznacznie zidentyfikować, do której spółki należą dane.
+
+## Oczyszczanie i przygotowanie danych
+
+Po pobraniu dane są wstępnie oczyszczane i przygotowywane do dalszej analizy. Zastosowano kilka prostych, ale istotnych kroków porządkujących dane.
+
+Po pierwsze, program sprawdza, czy dla danego symbolu udało się pobrać dane. Jeżeli pobrana tabela jest pusta, zgłaszany jest błąd informujący o problemie z danym symbolem. Pozwala to uniknąć dalszych obliczeń na pustym zbiorze danych.
+
+Po drugie, w nowszych wersjach biblioteki `yfinance` dane mogą zostać zwrócone z kolumnami typu `MultiIndex`. W takim przypadku program sprowadza nazwy kolumn do prostszej, jednowymiarowej postaci, dzięki czemu dalsza analiza może być wykonywana tak samo dla wszystkich spółek.
+
+Po trzecie, indeks tabeli jest resetowany, aby data sesji giełdowej była zwykłą kolumną `Date`. Następnie program wybiera tylko te kolumny, które są potrzebne w dalszej analizie: `Date`, `Open`, `High`, `Low`, `Close`, `Adj Close`, `Volume` oraz `Symbol`. Dzięki temu dalsze części programu pracują na jednolitej strukturze danych.
+
+Po czwarte, kolumna `Date` jest konwertowana do typu daty `datetime`, a dane są sortowane rosnąco według daty. Ma to znaczenie dla poprawnego liczenia stóp zwrotu, średnich kroczących, skumulowanej stopy zwrotu i obsunięcia kapitału, ponieważ wszystkie te wielkości zależą od prawidłowej kolejności czasowej obserwacji.
+
+Po piąte, przy obliczaniu wybranych statystyk pomijane są wartości brakujące pojawiające się naturalnie na początku szeregu czasowego. Na przykład pierwsza dzienna stopa zwrotu jest niezdefiniowana, ponieważ nie istnieje wcześniejsza cena zamknięcia, do której można ją porównać. Podobnie średnie kroczące MA20, MA50 i MA200 oraz zmienność krocząca wymagają odpowiedniej liczby wcześniejszych obserwacji. W takich przypadkach brakujące wartości nie są sztucznie uzupełniane, lecz wynikają z definicji stosowanych wskaźników.
+
+Po przygotowaniu danych program zapisuje osobny plik `.csv` dla każdej spółki. Zapisane pliki zawierają zarówno dane pobrane z Yahoo Finance, jak i dodatkowo obliczone kolumny, takie jak `Return`, `Cumulative_Return`, `MA20`, `MA50`, `MA200`, `Volatility_20`, `Running_Max` oraz `Drawdown`.
+
 ## Wykorzystywane biblioteki
 
 Projekt korzysta z następujących bibliotek Pythona:
@@ -80,7 +112,7 @@ Project/
 ├── Analysis
 │   └── główny plik z kodem analizy giełdowej
 │
-└── wyniki_analizy_giełdowej/
+└── wyniki_analizy_gieldowej/
     └── katalog z wygenerowanymi plikami CSV oraz wykresami PNG
 ```
 
